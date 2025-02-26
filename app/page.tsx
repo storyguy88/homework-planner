@@ -10,13 +10,17 @@ import { CalendarView } from "@/components/calendar-view";
 import { getTasks } from "@/lib/data";
 import { HomeworkTask } from "@/lib/types";
 import { BookOpen, Plus } from "lucide-react";
+import { initializeSampleData } from "@/lib/sampleData";
 
 export default function Home() {
   const [tasks, setTasks] = useState<HomeworkTask[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
-  // Load tasks on component mount
+  // Load tasks and initialize sample data on component mount
   useEffect(() => {
+    // Initialize sample data if no tasks exist
+    initializeSampleData();
+    // Then load tasks (including any sample data that was just added)
     loadTasks();
   }, []);
 
@@ -25,7 +29,7 @@ export default function Home() {
     const intervalId = setInterval(() => {
       loadTasks();
     }, 1000); // Check every second for changes
-    
+
     return () => clearInterval(intervalId);
   }, []);
 
@@ -40,7 +44,7 @@ export default function Home() {
     if (a.isComplete !== b.isComplete) {
       return a.isComplete ? 1 : -1;
     }
-    
+
     // Then sort by due date (earliest first)
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
@@ -55,7 +59,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Tasks Column - Takes up 1/3 on large screens */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4 flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <BookOpen className="h-5 w-5 mr-2" />
@@ -66,7 +70,7 @@ export default function Home() {
                 Add Task
               </Button>
             </div>
-            
+
             {tasks.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -80,7 +84,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-220px)] pr-2">
                 {sortedTasks.map((task) => (
                   <TaskCard key={task.id} task={task} onUpdate={loadTasks} />
                 ))}
