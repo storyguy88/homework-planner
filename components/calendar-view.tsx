@@ -479,7 +479,8 @@ export function CalendarView() {
 
   // Convert time blocks to FullCalendar events
   const getEventsForMonth = (month: Date): EventInput[] => {
-    return timeBlocks
+    // First, get all the time block events
+    const timeBlockEvents = timeBlocks
       .map(block => {
         const task = tasks.find(t => t.id === block.taskId);
         if (!task) return null;
@@ -493,6 +494,24 @@ export function CalendarView() {
 
         const subject = subjects.find(s => s.id === task.subjectId);
 
+        // Darken the subject color for time blocks
+        const darkenColor = (color: string): string => {
+          // Convert hex to RGB
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+
+          // Darken by reducing each component by 30%
+          const darkerR = Math.floor(r * 0.7);
+          const darkerG = Math.floor(g * 0.7);
+          const darkerB = Math.floor(b * 0.7);
+
+          // Convert back to hex
+          return `#${darkerR.toString(16).padStart(2, '0')}${darkerG.toString(16).padStart(2, '0')}${darkerB.toString(16).padStart(2, '0')}`;
+        };
+
+        const backgroundColor = subject?.color ? darkenColor(subject.color) : '#999';
+
         return {
           id: block.id,
           title: task.title,
@@ -502,15 +521,51 @@ export function CalendarView() {
             taskId: task.id,
             duration: block.duration,
             subject: subject?.name || '',
-            color: subject?.color || '#ccc'
+            color: subject?.color || '#ccc',
+            type: 'timeBlock'
           },
-          backgroundColor: subject?.color || '#ccc',
-          borderColor: subject?.color || '#ccc',
+          backgroundColor: backgroundColor,
+          borderColor: backgroundColor,
           textColor: '#fff',
           classNames: ['calendar-event']
         };
       })
       .filter((event): event is NonNullable<typeof event> => event !== null);
+
+    // Now, add due date events for all tasks
+    const dueDateEvents = tasks
+      .map(task => {
+        const dueDate = new Date(task.dueDate);
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
+
+        // Only include due dates for this month
+        if (dueDate < monthStart || dueDate > monthEnd) return null;
+
+        const subject = subjects.find(s => s.id === task.subjectId);
+
+        return {
+          id: `due-${task.id}`,
+          title: task.title,
+          start: task.dueDate,
+          allDay: true,
+          extendedProps: {
+            taskId: task.id,
+            subject: subject?.name || '',
+            color: subject?.color || '#ccc',
+            type: 'dueDate',
+            isComplete: task.isComplete
+          },
+          backgroundColor: subject?.color || '#ccc',
+          borderColor: subject?.color || '#ccc',
+          textColor: '#fff',
+          classNames: ['calendar-event', 'due-date-event']
+        };
+      })
+      .filter((event): event is NonNullable<typeof event> => event !== null);
+
+    // Combine both types of events
+    return [...timeBlockEvents, ...dueDateEvents];
   };
 
   // Handle allocating time for a task
@@ -809,14 +864,31 @@ export function CalendarView() {
   // Render event content
   const renderEventContent = (eventInfo: any) => {
     const { extendedProps } = eventInfo.event;
+    const isDueDate = extendedProps.type === 'dueDate';
+    const isComplete = extendedProps.isComplete;
+
+    // Apply different styles for due date events
+    const eventClasses = isDueDate
+      ? `p-1.5 overflow-hidden text-xs shadow-sm ${isComplete ? 'opacity-60' : ''}`
+      : 'p-1.5 overflow-hidden text-xs shadow-sm';
+
+    const titleClasses = isDueDate && isComplete
+      ? 'font-semibold truncate line-through'
+      : 'font-semibold truncate';
 
     return (
-      <div className="p-1 overflow-hidden text-xs">
-        <div className="font-semibold truncate">{eventInfo.event.title}</div>
+      <div className={eventClasses}>
+        <div className={titleClasses}>{eventInfo.event.title}</div>
         <div className="flex items-center gap-1 mt-0.5">
-          <span className="time-indicator">
-            {formatTime(extendedProps.duration)}
-          </span>
+          {isDueDate ? (
+            <span className="bg-gradient-to-r from-blue-500 to-teal-400 text-white px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+              Due Date!
+            </span>
+          ) : (
+            <span className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
+              {formatTime(extendedProps.duration)}
+            </span>
+          )}
         </div>
       </div>
     );
