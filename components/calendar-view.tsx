@@ -510,7 +510,7 @@ export function CalendarView() {
           classNames: ['calendar-event']
         };
       })
-      .filter((event): event is EventInput => event !== null);
+      .filter((event): event is NonNullable<typeof event> => event !== null);
   };
 
   // Handle allocating time for a task
