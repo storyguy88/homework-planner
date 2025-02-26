@@ -61,11 +61,11 @@ export function CalendarView() {
   // Load tasks and time blocks
   useEffect(() => {
     loadData();
-    
+
     // Add event listeners for custom drag events
     document.addEventListener('taskDragStart', handleTaskDragStart as EventListener);
     document.addEventListener('taskDragEnd', handleTaskDragEnd as EventListener);
-    
+
     return () => {
       document.removeEventListener('taskDragStart', handleTaskDragStart as EventListener);
       document.removeEventListener('taskDragEnd', handleTaskDragEnd as EventListener);
@@ -75,7 +75,7 @@ export function CalendarView() {
   // Initialize months to render
   useEffect(() => {
     if (!isClient) return;
-    
+
     if (continuousScrollEnabled) {
       const today = new Date();
       const prevPrevMonth = subMonths(today, 2);
@@ -93,19 +93,19 @@ export function CalendarView() {
     const intervalId = setInterval(() => {
       loadData();
     }, 1000); // Check every second for changes
-    
+
     return () => clearInterval(intervalId);
   }, []);
 
   // Measure month heights after render
   useEffect(() => {
     if (!isClient || !continuousScrollEnabled || !calendarContentRef.current) return;
-    
+
     // Wait for the calendar to render
     const timer = setTimeout(() => {
       const monthElements = calendarContentRef.current?.querySelectorAll('.calendar-month');
       if (!monthElements) return;
-      
+
       // Store the height of each month
       monthElements.forEach((monthElement) => {
         const monthKey = monthElement.getAttribute('data-month');
@@ -114,7 +114,7 @@ export function CalendarView() {
           monthHeightsRef.current.set(monthKey, height);
         }
       });
-      
+
       // If this is the first render, scroll to the current month
       if (!lastScrollPositionRef.current) {
         const currentMonthElement = Array.from(monthElements).find(el => {
@@ -123,7 +123,7 @@ export function CalendarView() {
           const monthDate = new Date(monthStr);
           return isSameMonth(monthDate, new Date());
         });
-        
+
         if (currentMonthElement) {
           // Scroll to the current month with a slight delay to ensure rendering
           setTimeout(() => {
@@ -138,7 +138,7 @@ export function CalendarView() {
         }
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [monthsToRender, isClient, continuousScrollEnabled]);
 
@@ -147,33 +147,33 @@ export function CalendarView() {
     if (!isClient || !continuousScrollEnabled || !calendarContentRef.current) return;
 
     const calendarContent = calendarContentRef.current;
-    
+
     const handleScroll = () => {
       // Don't process scroll events during programmatic scrolling or when scroll is locked
       if (isManualScrollingRef.current || scrollLocked) return;
-      
+
       const { scrollTop, scrollHeight, clientHeight } = calendarContent;
-      
+
       // Update the current month title based on which month is most visible
       updateVisibleMonthTitle();
-      
+
       // Store the current scroll position
       lastScrollPositionRef.current = scrollTop;
-      
+
       // Clear any existing timeout to prevent multiple rapid updates
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      
+
       // Check if we're at the top or bottom
       isAtTopRef.current = scrollTop === 0;
       isAtBottomRef.current = scrollTop + clientHeight >= scrollHeight - 10;
-      
+
       // If we're near the bottom of the content (within 200px of the bottom)
       if (scrollTop + clientHeight >= scrollHeight - 200 && !isAtBottomRef.current) {
         // Set a flag to indicate we're handling a scroll event
         isScrollingRef.current = true;
-        
+
         // Add the next month to the list
         scrollTimeoutRef.current = setTimeout(() => {
           setMonthsToRender(prev => {
@@ -181,21 +181,21 @@ export function CalendarView() {
             const nextMonth = addMonths(lastMonth, 1);
             return [...prev, nextMonth];
           });
-          
+
           // Remove the first month if we have more than 8 months rendered
           // to prevent memory issues with too many months
           if (monthsToRender.length > 8) {
             // Calculate the height of the first month that will be removed
             const firstMonthKey = format(monthsToRender[0], 'yyyy-MM-dd');
             const firstMonthHeight = monthHeightsRef.current.get(firstMonthKey) || 0;
-            
+
             // Adjust scroll position to account for the removed content
             setTimeout(() => {
               if (calendarContentRef.current) {
                 calendarContentRef.current.scrollTop = lastScrollPositionRef.current - firstMonthHeight;
                 lastScrollPositionRef.current = calendarContentRef.current.scrollTop;
               }
-              
+
               setMonthsToRender(prev => prev.slice(1));
               isScrollingRef.current = false;
             }, 50);
@@ -204,12 +204,12 @@ export function CalendarView() {
           }
         }, 200);
       }
-      
+
       // If we're near the top of the content (within 200px of the top) but not at the very top
       if (scrollTop <= 200 && scrollTop > 0 && !isAtTopRef.current) {
         // Set a flag to indicate we're handling a scroll event
         isScrollingRef.current = true;
-        
+
         scrollTimeoutRef.current = setTimeout(() => {
           // Add the previous month to the beginning of the list
           setMonthsToRender(prev => {
@@ -217,7 +217,7 @@ export function CalendarView() {
             const prevMonth = subMonths(firstMonth, 1);
             return [prevMonth, ...prev];
           });
-          
+
           // After adding the month, adjust scroll position
           setTimeout(() => {
             // Find the height of the first month that was added
@@ -225,47 +225,47 @@ export function CalendarView() {
             if (monthElements && monthElements.length > 0) {
               const firstMonthElement = monthElements[0] as HTMLElement;
               const firstMonthHeight = firstMonthElement.offsetHeight;
-              
+
               // Store the height for future reference
               const monthKey = firstMonthElement.getAttribute('data-month');
               if (monthKey) {
                 monthHeightsRef.current.set(monthKey, firstMonthHeight);
               }
-              
+
               // Adjust scroll position to maintain the same view
               if (calendarContentRef.current) {
                 calendarContentRef.current.scrollTop = lastScrollPositionRef.current + firstMonthHeight;
                 lastScrollPositionRef.current = calendarContentRef.current.scrollTop;
               }
             }
-            
+
             // Remove the last month if we have more than 8 months rendered
             if (monthsToRender.length > 8) {
               setMonthsToRender(prev => prev.slice(0, prev.length - 1));
             }
-            
+
             isScrollingRef.current = false;
           }, 50);
         }, 200);
       }
-      
+
       // If we're at the very top, temporarily lock scrolling to prevent bouncing
       if (scrollTop === 0 && !scrollLocked) {
         setScrollLocked(true);
-        
+
         // Unlock after a short delay
         if (scrollLockTimeoutRef.current) {
           clearTimeout(scrollLockTimeoutRef.current);
         }
-        
+
         scrollLockTimeoutRef.current = setTimeout(() => {
           setScrollLocked(false);
         }, 500);
       }
     };
-    
+
     calendarContent.addEventListener('scroll', handleScroll);
-    
+
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -280,34 +280,34 @@ export function CalendarView() {
   // Update the visible month title based on scroll position
   const updateVisibleMonthTitle = () => {
     if (!calendarContentRef.current) return;
-    
+
     const calendarContent = calendarContentRef.current;
     const monthElements = calendarContent.querySelectorAll('.calendar-month');
-    
+
     if (monthElements.length === 0) return;
-    
+
     // Find which month is most visible in the viewport
     let mostVisibleMonth: Element | null = null;
     let maxVisibleHeight = 0;
-    
+
     monthElements.forEach(monthElement => {
       const rect = monthElement.getBoundingClientRect();
       const containerRect = calendarContent.getBoundingClientRect();
-      
+
       // Calculate how much of the month is visible in the viewport
       const visibleTop = Math.max(rect.top, containerRect.top);
       const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
       const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      
+
       if (visibleHeight > maxVisibleHeight) {
         maxVisibleHeight = visibleHeight;
         mostVisibleMonth = monthElement;
       }
     });
-    
+
     // Update the current month title
     if (mostVisibleMonth) {
-      const monthDateStr = mostVisibleMonth.getAttribute('data-month');
+      const monthDateStr = (mostVisibleMonth as Element).getAttribute('data-month');
       if (monthDateStr) {
         const monthDate = new Date(monthDateStr);
         if (!isNaN(monthDate.getTime())) {
@@ -328,21 +328,21 @@ export function CalendarView() {
   const handleTaskDragStart = (e: CustomEvent) => {
     setIsDragging(true);
     document.body.classList.add('dragging-active');
-    
+
     // Store the task ID from the event
     if (e.detail && e.detail.taskId) {
       setDraggedTaskId(e.detail.taskId);
     }
-    
+
     // Make calendar cells droppable
     makeCalendarCellsDroppable();
   };
-  
+
   // Handle task drag end
   const handleTaskDragEnd = () => {
     setIsDragging(false);
     document.body.classList.remove('dragging-active');
-    
+
     // Remove drop handlers from calendar cells
     cleanupCalendarCellDropHandlers();
   };
@@ -351,66 +351,66 @@ export function CalendarView() {
   const makeCalendarCellsDroppable = () => {
     // Target all day cells in the calendar
     const dayCells = document.querySelectorAll('.fc-daygrid-day');
-    
+
     dayCells.forEach(cell => {
       // Add dragover handler
       const dragoverHandler = (e: Event) => {
         e.preventDefault();
         (cell as HTMLElement).classList.add('fc-day-highlight');
       };
-      
+
       // Add dragleave handler
       const dragleaveHandler = () => {
         (cell as HTMLElement).classList.remove('fc-day-highlight');
       };
-      
+
       cell.addEventListener('dragover', dragoverHandler as EventListener);
       cell.addEventListener('dragleave', dragleaveHandler as EventListener);
-      
+
       // Add drop handler
       cell.addEventListener('drop', handleDayCellDrop as EventListener);
-      
+
       // Store the handlers on the element for later removal
       (cell as any)._dragoverHandler = dragoverHandler;
       (cell as any)._dragleaveHandler = dragleaveHandler;
     });
   };
-  
+
   // Clean up drop handlers
   const cleanupCalendarCellDropHandlers = () => {
     const dayCells = document.querySelectorAll('.fc-daygrid-day');
-    
+
     dayCells.forEach(cell => {
       // Remove handlers using the stored references
       if ((cell as any)._dragoverHandler) {
         cell.removeEventListener('dragover', (cell as any)._dragoverHandler);
       }
-      
+
       if ((cell as any)._dragleaveHandler) {
         cell.removeEventListener('dragleave', (cell as any)._dragleaveHandler);
       }
-      
+
       cell.removeEventListener('drop', handleDayCellDrop as EventListener);
       (cell as HTMLElement).classList.remove('fc-day-highlight');
     });
   };
-  
+
   // Handle drop on a day cell
   const handleDayCellDrop = (e: Event) => {
     e.preventDefault();
     const dragEvent = e as DragEvent;
-    
+
     // Get the cell element
     const cell = e.currentTarget as HTMLElement;
     cell.classList.remove('fc-day-highlight');
-    
+
     // Get the date from the cell's data-date attribute
     const dateStr = cell.getAttribute('data-date');
     if (!dateStr) return;
-    
+
     // Get the task ID from multiple possible sources
     let taskId: string | null = null;
-    
+
     // First try our component state
     if (draggedTaskId) {
       taskId = draggedTaskId;
@@ -423,7 +423,7 @@ export function CalendarView() {
     else if (dragEvent.dataTransfer) {
       // Try to get from text data
       taskId = dragEvent.dataTransfer.getData('text/plain');
-      
+
       // If not found, try to get from custom format
       if (!taskId) {
         try {
@@ -437,7 +437,7 @@ export function CalendarView() {
         }
       }
     }
-    
+
     if (!taskId) {
       toast({
         title: "Error",
@@ -446,11 +446,11 @@ export function CalendarView() {
       });
       return;
     }
-    
+
     // Find the task - make sure we have the latest tasks data
     const currentTasks = getTasks();
     const task = currentTasks.find(t => t.id === taskId);
-    
+
     if (!task) {
       toast({
         title: "Error",
@@ -459,17 +459,17 @@ export function CalendarView() {
       });
       return;
     }
-    
+
     // Open the dialog to allocate time
     setSelectedTask(task);
-    
+
     // Use the exact date string from the cell without timezone conversion
     // This ensures we use the exact date that was dropped on
     setSelectedDate(new Date(dateStr + 'T12:00:00'));
-    
+
     setDuration(Math.min(60, task.remainingTime || 60));
     setIsDialogOpen(true);
-    
+
     // Clear the stored task IDs
     setDraggedTaskId(null);
     if (typeof window !== 'undefined') {
@@ -483,16 +483,16 @@ export function CalendarView() {
       .map(block => {
         const task = tasks.find(t => t.id === block.taskId);
         if (!task) return null;
-        
+
         const blockDate = new Date(block.date);
         const monthStart = startOfMonth(month);
         const monthEnd = endOfMonth(month);
-        
+
         // Only include events for this month
         if (blockDate < monthStart || blockDate > monthEnd) return null;
-        
+
         const subject = subjects.find(s => s.id === task.subjectId);
-        
+
         return {
           id: block.id,
           title: task.title,
@@ -516,7 +516,7 @@ export function CalendarView() {
   // Handle allocating time for a task
   const handleAllocateTime = () => {
     if (!selectedTask) return;
-    
+
     // Check if there's enough remaining time
     if (duration > selectedTask.remainingTime) {
       toast({
@@ -526,11 +526,11 @@ export function CalendarView() {
       });
       return;
     }
-    
+
     // Format the date with timezone handling to ensure correct date
     // Use the exact date that was selected without timezone adjustments
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
-    
+
     // Create a new time block with the currently selected date
     const newTimeBlock: TimeBlock = {
       id: generateId(),
@@ -538,14 +538,14 @@ export function CalendarView() {
       date: formattedDate,
       duration: duration,
     };
-    
+
     saveTimeBlock(newTimeBlock);
-    
+
     toast({
       title: "Time allocated",
       description: `${formatTime(duration)} scheduled for "${selectedTask.title}" on ${format(selectedDate, "MMM d")}.`,
     });
-    
+
     // Refresh data immediately
     loadData();
     setIsDialogOpen(false);
@@ -554,12 +554,12 @@ export function CalendarView() {
   // Handle deleting a time block
   const handleDeleteTimeBlock = (blockId: string) => {
     deleteTimeBlock(blockId);
-    
+
     toast({
       title: "Time block removed",
       description: "The scheduled time has been removed.",
     });
-    
+
     // Refresh data immediately
     loadData();
   };
@@ -567,7 +567,7 @@ export function CalendarView() {
   // Handle event click in calendar
   const handleEventClick = (info: any) => {
     const blockId = info.event.id;
-    
+
     // Show a confirmation dialog
     if (confirm(`Remove this scheduled time for "${info.event.title}"?`)) {
       handleDeleteTimeBlock(blockId);
@@ -578,12 +578,12 @@ export function CalendarView() {
   const handleViewChange = (value: string) => {
     if (value === 'month' || value === 'week') {
       setViewType(value === 'month' ? 'dayGridMonth' : 'timeGridWeek');
-      
+
       if (value === 'week' && continuousScrollEnabled) {
         // Disable continuous scrolling for week view
         setContinuousScrollEnabled(false);
       }
-      
+
       if (!continuousScrollEnabled) {
         // If we're using the standard calendar view
         if (calendarRef.current) {
@@ -618,12 +618,12 @@ export function CalendarView() {
     if (continuousScrollEnabled && calendarContentRef.current) {
       // Set flag to indicate manual scrolling
       isManualScrollingRef.current = true;
-      
+
       // Find the previous month element
-      const currentMonthIndex = monthsToRender.findIndex(month => 
+      const currentMonthIndex = monthsToRender.findIndex(month =>
         isSameMonth(month, currentMonth)
       );
-      
+
       if (currentMonthIndex > 0) {
         // If we already have the previous month rendered, scroll to it
         const monthElements = calendarContentRef.current.querySelectorAll('.calendar-month');
@@ -631,7 +631,7 @@ export function CalendarView() {
           const prevMonthElement = monthElements[currentMonthIndex - 1];
           if (prevMonthElement) {
             prevMonthElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
+
             // Update the title immediately for better UX
             const monthDateStr = prevMonthElement.getAttribute('data-month') || '';
             if (monthDateStr) {
@@ -647,11 +647,11 @@ export function CalendarView() {
         // Add previous month if needed
         const prevMonth = subMonths(monthsToRender[0], 1);
         setMonthsToRender(prev => [prevMonth, ...prev]);
-        
+
         // Update the title immediately for better UX
         setCurrentViewTitle(format(prevMonth, 'MMMM yyyy'));
         setCurrentMonth(prevMonth);
-        
+
         // Wait for render then scroll
         setTimeout(() => {
           const firstMonthElement = calendarContentRef.current?.querySelector('.calendar-month');
@@ -660,7 +660,7 @@ export function CalendarView() {
           }
         }, 50);
       }
-      
+
       // Reset flag after animation completes
       setTimeout(() => {
         isManualScrollingRef.current = false;
@@ -678,12 +678,12 @@ export function CalendarView() {
     if (continuousScrollEnabled && calendarContentRef.current) {
       // Set flag to indicate manual scrolling
       isManualScrollingRef.current = true;
-      
+
       // Find the next month element
-      const currentMonthIndex = monthsToRender.findIndex(month => 
+      const currentMonthIndex = monthsToRender.findIndex(month =>
         isSameMonth(month, currentMonth)
       );
-      
+
       if (currentMonthIndex < monthsToRender.length - 1) {
         // If we already have the next month rendered, scroll to it
         const monthElements = calendarContentRef.current.querySelectorAll('.calendar-month');
@@ -691,7 +691,7 @@ export function CalendarView() {
           const nextMonthElement = monthElements[currentMonthIndex + 1];
           if (nextMonthElement) {
             nextMonthElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
+
             // Update the title immediately for better UX
             const monthDateStr = nextMonthElement.getAttribute('data-month') || '';
             if (monthDateStr) {
@@ -707,11 +707,11 @@ export function CalendarView() {
         // Add next month if needed
         const nextMonth = addMonths(monthsToRender[monthsToRender.length - 1], 1);
         setMonthsToRender(prev => [...prev, nextMonth]);
-        
+
         // Update the title immediately for better UX
         setCurrentViewTitle(format(nextMonth, 'MMMM yyyy'));
         setCurrentMonth(nextMonth);
-        
+
         // Wait for render then scroll
         setTimeout(() => {
           const monthElements = calendarContentRef.current?.querySelectorAll('.calendar-month');
@@ -721,7 +721,7 @@ export function CalendarView() {
           }
         }, 50);
       }
-      
+
       // Reset flag after animation completes
       setTimeout(() => {
         isManualScrollingRef.current = false;
@@ -739,7 +739,7 @@ export function CalendarView() {
   const handleDatesSet = (dateInfo: any) => {
     // Get the current view's start date
     const viewStart = new Date(dateInfo.start);
-    
+
     // Store the current month
     if (viewType === 'dayGridMonth') {
       setCurrentMonth(new Date(viewStart));
@@ -752,12 +752,12 @@ export function CalendarView() {
     if (calendarContentRef.current && continuousScrollEnabled) {
       isManualScrollingRef.current = true;
       setScrollLocked(true);
-      
+
       // Scroll to the first month
       const firstMonthElement = calendarContentRef.current.querySelector('.calendar-month');
       if (firstMonthElement) {
         firstMonthElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        
+
         // Update the title immediately for better UX
         const monthDateStr = firstMonthElement.getAttribute('data-month') || '';
         if (monthDateStr) {
@@ -768,7 +768,7 @@ export function CalendarView() {
           }
         }
       }
-      
+
       // Reset flags after animation completes
       setTimeout(() => {
         isManualScrollingRef.current = false;
@@ -781,7 +781,7 @@ export function CalendarView() {
   const toggleContinuousScroll = () => {
     const newValue = !continuousScrollEnabled;
     setContinuousScrollEnabled(newValue);
-    
+
     // Reset to single month view when disabling continuous scroll
     if (!newValue) {
       setMonthsToRender([currentMonth]);
@@ -792,16 +792,16 @@ export function CalendarView() {
       const nextMonth = addMonths(currentMonth, 1);
       const nextNextMonth = addMonths(currentMonth, 2);
       setMonthsToRender([prevPrevMonth, prevMonth, currentMonth, nextMonth, nextNextMonth]);
-      
+
       // Reset scroll position tracking
       lastScrollPositionRef.current = 0;
       monthHeightsRef.current.clear();
     }
-    
+
     toast({
       title: continuousScrollEnabled ? "Continuous scroll disabled" : "Continuous scroll enabled",
-      description: continuousScrollEnabled 
-        ? "Using standard calendar navigation." 
+      description: continuousScrollEnabled
+        ? "Using standard calendar navigation."
         : "Calendar will continuously load months as you scroll.",
     });
   };
@@ -809,7 +809,7 @@ export function CalendarView() {
   // Render event content
   const renderEventContent = (eventInfo: any) => {
     const { extendedProps } = eventInfo.event;
-    
+
     return (
       <div className="p-1 overflow-hidden text-xs">
         <div className="font-semibold truncate">{eventInfo.event.title}</div>
@@ -826,14 +826,14 @@ export function CalendarView() {
   const renderMonthCalendar = (month: Date, index: number) => {
     const monthStr = format(month, 'yyyy-MM');
     const events = getEventsForMonth(month);
-    
+
     // Use a string format for the data-month attribute to avoid hydration issues
     const monthFormatted = format(month, 'yyyy-MM-dd');
-    
+
     return (
-      <div 
-        key={`${monthStr}-${index}`} 
-        className="calendar-month mb-8 pb-4" 
+      <div
+        key={`${monthStr}-${index}`}
+        className="calendar-month mb-8 pb-4"
         data-month={monthFormatted}
       >
         <div className="mb-4 text-sm font-medium text-muted-foreground calendar-month-title">
@@ -870,12 +870,12 @@ export function CalendarView() {
             <CalendarIcon className="h-5 w-5" />
             <h3 className="font-medium">Study Schedule</h3>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
               Loading...
             </Button>
-            
+
             <div className="calendar-toggle-group">
               <ToggleGroup type="single" value="month">
                 <ToggleGroupItem value="week" aria-label="Week view">Week</ToggleGroupItem>
@@ -884,7 +884,7 @@ export function CalendarView() {
             </div>
           </div>
         </div>
-        
+
         <div className="calendar-header bg-background pb-2 flex items-center justify-between">
           <Button variant="ghost" size="sm">
             <ChevronLeft className="h-4 w-4" />
@@ -894,7 +894,7 @@ export function CalendarView() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="border rounded-lg bg-white dark:bg-card overflow-hidden calendar-container" style={{ height: '600px' }}>
           <div className="flex items-center justify-center h-full">
             <p>Loading calendar...</p>
@@ -911,17 +911,17 @@ export function CalendarView() {
           <CalendarIcon className="h-5 w-5" />
           <h3 className="font-medium">Study Schedule</h3>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={toggleContinuousScroll}
             className={continuousScrollEnabled ? "bg-primary/10" : ""}
           >
             {continuousScrollEnabled ? "Continuous scroll: On" : "Continuous scroll: Off"}
           </Button>
-          
+
           <div className="calendar-toggle-group">
             <ToggleGroup type="single" value={viewType === 'dayGridMonth' ? 'month' : 'week'} onValueChange={handleViewChange}>
               <ToggleGroupItem value="week" aria-label="Week view">Week</ToggleGroupItem>
@@ -930,8 +930,8 @@ export function CalendarView() {
           </div>
         </div>
       </div>
-      
-      <div 
+
+      <div
         ref={headerRef}
         className="calendar-header bg-background pb-2 flex items-center justify-between sticky top-12 z-10"
       >
@@ -943,13 +943,13 @@ export function CalendarView() {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      
-      <div 
+
+      <div
         ref={calendarWrapperRef}
         className="border rounded-lg bg-white dark:bg-card overflow-hidden calendar-container"
       >
         {continuousScrollEnabled ? (
-          <div 
+          <div
             ref={calendarContentRef}
             className="calendar-content overflow-auto"
             style={{ height: '600px' }}
@@ -983,14 +983,14 @@ export function CalendarView() {
           </div>
         )}
       </div>
-      
+
       {/* Time allocation dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Schedule Time for {selectedTask?.title}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div>
               <Label htmlFor="duration">Time to allocate (minutes)</Label>
@@ -1010,7 +1010,7 @@ export function CalendarView() {
               </p>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
