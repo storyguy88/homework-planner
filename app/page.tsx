@@ -9,7 +9,7 @@ import { TaskForm } from "@/components/task-form";
 import { CalendarView } from "@/components/calendar-view";
 import { getTasks } from "@/lib/data";
 import { HomeworkTask } from "@/lib/types";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, Pizza } from "lucide-react";
 import { initializeSampleData } from "@/lib/sampleData";
 
 export default function Home() {
@@ -53,7 +53,15 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Homework Time Budgeting</h1>
+          <h1 className="text-3xl font-bold mb-2 flex items-center justify-center tracking-wide">
+            PIZZ<span className="inline-flex items-center justify-center relative">
+              <Pizza className="h-8 w-8 text-red-500 transform rotate-[225deg] translate-y-1" />
+              <span className="sr-only">A</span>
+            </span><span className="mx-2"></span>PL<span className="inline-flex items-center justify-center relative">
+              <Pizza className="h-8 w-8 text-red-500 transform rotate-[225deg] translate-y-1" />
+              <span className="sr-only">A</span>
+            </span>NNER
+          </h1>
           <p className="text-muted-foreground">Plan your study time and stay on track with your assignments</p>
         </header>
 
