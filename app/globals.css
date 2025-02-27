@@ -139,7 +139,8 @@
   white-space: normal;
 }
 
-.fc-theme-standard td, .fc-theme-standard th {
+.fc-theme-standard td,
+.fc-theme-standard th {
   border-color: hsl(var(--border));
 }
 
@@ -147,7 +148,7 @@
   border-color: hsl(var(--border));
 }
 
-.dark .fc-theme-standard td, 
+.dark .fc-theme-standard td,
 .dark .fc-theme-standard th,
 .dark .fc-theme-standard .fc-scrollgrid {
   border-color: hsl(var(--border));
@@ -168,7 +169,7 @@
   background-color: hsl(var(--accent));
 }
 
-.dark .fc-button-primary:not(:disabled).fc-button-active, 
+.dark .fc-button-primary:not(:disabled).fc-button-active,
 .dark .fc-button-primary:not(:disabled):active {
   background-color: hsl(var(--accent));
   border-color: hsl(var(--border));
@@ -264,11 +265,19 @@
 }
 
 /* Style the calendar to look more like the design */
-.fc .fc-daygrid-day {
+.fc .fc-daygrid-day:not(.fc-day-other) {
   border-radius: 0.25rem;
   border: 1px solid hsl(var(--border));
   margin: 2px;
   overflow: hidden;
+}
+
+/* Remove borders and background from out-of-month dates */
+.fc .fc-daygrid-day.fc-day-other {
+  background: transparent !important;
+  border: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .fc .fc-scrollgrid-section-header th {
@@ -283,11 +292,55 @@
 }
 
 .fc .fc-daygrid-day.fc-day-other {
-  visibility: hidden;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
 }
 
 .dark .fc .fc-daygrid-day.fc-day-other {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border: none !important;
+}
+
+/* Additional rule to ensure out-of-month dates are completely invisible */
+.fc-day-other,
+.fc-daygrid-day.fc-day-other,
+.fc-theme-standard .fc-day-other,
+.fc-theme-standard td.fc-day-other,
+.fc-theme-standard tr.fc-day-other {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+
+/* Direct targeting of table cells for out-of-month dates */
+table.fc-scrollgrid-sync-table td.fc-day-other,
+.fc-scrollgrid-sync-table td.fc-daygrid-day.fc-day-other {
+  background: transparent !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Final rule to completely hide out-of-month dates */
+.fc-daygrid-day.fc-day-other {
+  visibility: hidden !important;
+  border: none !important;
+  background: none !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
 }
 
 /* Style the prev/next buttons to use chevrons */
@@ -366,7 +419,7 @@
   border: none;
 }
 
-.fc .fc-scrollgrid-section > td {
+.fc .fc-scrollgrid-section>td {
   border: none;
 }
 
@@ -427,7 +480,72 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Hide days from other months */
-.fc .fc-daygrid-day.fc-day-other {
-  visibility: hidden;
+/* Ensure hover effects don't apply to non-date cells */
+.fc .fc-daygrid-day.fc-day-other:hover {
+  background-color: transparent !important;
+}
+
+/* Fix the calendar grid to handle missing cells */
+.fc-scrollgrid-sync-table {
+  width: 100% !important;
+}
+
+/* Ensure the calendar layout adjusts properly */
+.fc-dayGridMonth-view .fc-scrollgrid-sync-table {
+  table-layout: fixed !important;
+}
+
+/* Additional fixes for calendar grid */
+.fc-dayGridMonth-view .fc-daygrid-body {
+  width: 100% !important;
+}
+
+.fc .fc-daygrid-body-balanced .fc-daygrid-day-events {
+  position: relative !important;
+}
+
+/* Ensure the calendar cells are properly sized */
+.fc-dayGridMonth-view .fc-daygrid-day {
+  max-width: none !important;
+}
+
+/* Style for past dates */
+.fc .fc-day-past {
+  background-color: transparent !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  border-color: transparent !important;
+}
+
+.fc .fc-day-past .fc-daygrid-day-number {
+  color: #999 !important;
+  text-decoration: line-through;
+}
+
+.dark .fc .fc-day-past {
+  background-color: transparent !important;
+  opacity: 0.5 !important;
+  border-color: transparent !important;
+}
+
+.dark .fc .fc-day-past .fc-daygrid-day-number {
+  color: #666 !important;
+  text-decoration: line-through;
+}
+
+/* Fix for calendar row heights */
+.fc-dayGridMonth-view .fc-daygrid-body-unbalanced .fc-daygrid-day-events {
+  position: relative !important;
+  min-height: 2em;
+}
+
+/* Override FullCalendar's built-in shaded cell styles */
+.fc .fc-cell-shaded,
+.fc .fc-day-disabled,
+.fc-theme-standard .fc-cell-shaded,
+.fc-theme-standard .fc-day-disabled {
+  background: transparent !important;
+  border-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
