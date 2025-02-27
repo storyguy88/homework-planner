@@ -351,8 +351,18 @@ export function CalendarView() {
   const makeCalendarCellsDroppable = () => {
     // Target all day cells in the calendar
     const dayCells = document.querySelectorAll('.fc-daygrid-day');
+    const today = startOfDay(new Date());
 
     dayCells.forEach(cell => {
+      // Skip past dates
+      const dateStr = cell.getAttribute('data-date');
+      if (dateStr) {
+        const cellDate = new Date(dateStr + 'T12:00:00');
+        if (isBefore(cellDate, today)) {
+          return; // Skip this cell
+        }
+      }
+
       // Add dragover handler
       const dragoverHandler = (e: Event) => {
         e.preventDefault();
@@ -407,6 +417,18 @@ export function CalendarView() {
     // Get the date from the cell's data-date attribute
     const dateStr = cell.getAttribute('data-date');
     if (!dateStr) return;
+
+    // Check if the drop date is before today (past date)
+    const dropDate = new Date(dateStr + 'T12:00:00');
+    const today = startOfDay(new Date());
+    if (isBefore(dropDate, today)) {
+      toast({
+        title: "Cannot schedule in the past",
+        description: "You can only schedule tasks for today and future dates.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Get the task ID from multiple possible sources
     let taskId: string | null = null;
@@ -651,11 +673,25 @@ export function CalendarView() {
 
   // Handle date click in calendar
   const handleDateClick = (info: any) => {
+    // Create a date object from the clicked date
+    const clickedDate = new Date(info.dateStr + 'T12:00:00');
+
+    // Check if the clicked date is before today (past date)
+    const today = startOfDay(new Date());
+    if (isBefore(clickedDate, today)) {
+      toast({
+        title: "Cannot schedule in the past",
+        description: "You can only schedule tasks for today and future dates.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // If there are incomplete tasks, show the task selection dialog
     const incompleteTasks = tasks.filter(task => !task.isComplete);
     if (incompleteTasks.length > 0) {
       // Use the exact date without timezone conversion
-      setSelectedDate(new Date(info.dateStr + 'T12:00:00'));
+      setSelectedDate(clickedDate);
       // Set the first incomplete task as default
       setSelectedTask(incompleteTasks[0]);
       setDuration(Math.min(60, incompleteTasks[0].remainingTime || 60));
@@ -927,6 +963,11 @@ export function CalendarView() {
             dayMaxEvents={3}
             dragRevertDuration={0}
             showNonCurrentDates={false}
+            fixedWeekCount={false}
+            dayCellClassNames={(arg) => {
+              const today = startOfDay(new Date());
+              return isBefore(arg.date, today) ? 'fc-day-past' : '';
+            }}
           />
         </div>
       </div>
@@ -1051,6 +1092,11 @@ export function CalendarView() {
               dragRevertDuration={0}
               datesSet={handleDatesSet}
               showNonCurrentDates={false}
+              fixedWeekCount={false}
+              dayCellClassNames={(arg) => {
+                const today = startOfDay(new Date());
+                return isBefore(arg.date, today) ? 'fc-day-past' : '';
+              }}
             />
           </div>
         )}

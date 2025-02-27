@@ -7,8 +7,8 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Homework Time Budgeting App',
-  description: 'Manage your homework assignments and budget your time effectively',
+  title: 'Pizza Planner',
+  description: 'Plan your study time and stay on track with your assignments',
 };
 
 export default function RootLayout({

@@ -23,7 +23,7 @@ const TIME_BLOCKS_STORAGE_KEY = "homework-time-blocks";
 // Helper function to initialize data from localStorage or use defaults
 const initializeData = <T>(key: string, defaultData: T): T => {
   if (typeof window === "undefined") return defaultData;
-  
+
   const storedData = localStorage.getItem(key);
   return storedData ? JSON.parse(storedData) : defaultData;
 };
@@ -42,20 +42,20 @@ export const getTasks = (): HomeworkTask[] => {
 export const saveTask = (task: HomeworkTask): void => {
   const tasks = getTasks();
   const existingTaskIndex = tasks.findIndex((t) => t.id === task.id);
-  
+
   if (existingTaskIndex >= 0) {
     tasks[existingTaskIndex] = task;
   } else {
     tasks.push(task);
   }
-  
+
   saveData(TASKS_STORAGE_KEY, tasks);
 };
 
 export const deleteTask = (taskId: string): void => {
   const tasks = getTasks().filter((task) => task.id !== taskId);
   saveData(TASKS_STORAGE_KEY, tasks);
-  
+
   // Also delete any time blocks associated with this task
   const timeBlocks = getTimeBlocks().filter((block) => block.taskId !== taskId);
   saveData(TIME_BLOCKS_STORAGE_KEY, timeBlocks);
@@ -69,13 +69,13 @@ export const getSubjects = (): Subject[] => {
 export const saveSubject = (subject: Subject): void => {
   const subjects = getSubjects();
   const existingSubjectIndex = subjects.findIndex((s) => s.id === subject.id);
-  
+
   if (existingSubjectIndex >= 0) {
     subjects[existingSubjectIndex] = subject;
   } else {
     subjects.push(subject);
   }
-  
+
   saveData(SUBJECTS_STORAGE_KEY, subjects);
 };
 
@@ -92,15 +92,15 @@ export const getTimeBlocks = (): TimeBlock[] => {
 export const saveTimeBlock = (timeBlock: TimeBlock): void => {
   const timeBlocks = getTimeBlocks();
   const existingTimeBlockIndex = timeBlocks.findIndex((b) => b.id === timeBlock.id);
-  
+
   if (existingTimeBlockIndex >= 0) {
     timeBlocks[existingTimeBlockIndex] = timeBlock;
   } else {
     timeBlocks.push(timeBlock);
   }
-  
+
   saveData(TIME_BLOCKS_STORAGE_KEY, timeBlocks);
-  
+
   // Update the remaining time for the associated task
   updateTaskRemainingTime(timeBlock.taskId);
 };
@@ -108,12 +108,12 @@ export const saveTimeBlock = (timeBlock: TimeBlock): void => {
 export const deleteTimeBlock = (timeBlockId: string): void => {
   const timeBlocks = getTimeBlocks();
   const timeBlock = timeBlocks.find((block) => block.id === timeBlockId);
-  
+
   if (timeBlock) {
     const taskId = timeBlock.taskId;
     const updatedTimeBlocks = timeBlocks.filter((block) => block.id !== timeBlockId);
     saveData(TIME_BLOCKS_STORAGE_KEY, updatedTimeBlocks);
-    
+
     // Update the remaining time for the associated task
     updateTaskRemainingTime(taskId);
   }
@@ -123,14 +123,15 @@ export const deleteTimeBlock = (timeBlockId: string): void => {
 export const updateTaskRemainingTime = (taskId: string): void => {
   const tasks = getTasks();
   const task = tasks.find((t) => t.id === taskId);
-  
+
   if (task) {
     const timeBlocks = getTimeBlocks().filter((block) => block.taskId === taskId);
     const allocatedTime = timeBlocks.reduce((total, block) => total + block.duration, 0);
-    
+
     task.remainingTime = Math.max(0, task.totalTimeEstimate - allocatedTime);
-    task.isComplete = task.remainingTime === 0;
-    
+    // Remove automatic completion - time allocation should not affect completion status
+    // task.isComplete = task.remainingTime === 0;
+
     saveTask(task);
   }
 };
@@ -152,7 +153,7 @@ export const getTimeBlocksForTask = (taskId: string): TimeBlock[] => {
 export const formatTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  
+
   if (hours === 0) {
     return `${mins} min`;
   } else if (mins === 0) {

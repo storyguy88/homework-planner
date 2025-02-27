@@ -54,15 +54,15 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center tracking-wide">
-            PIZZ<span className="inline-flex items-center justify-center relative">
+            Homework Pizz<span className="inline-flex items-center justify-center relative">
               <Pizza className="h-8 w-8 text-red-500 transform rotate-[225deg] translate-y-1" />
-              <span className="sr-only">A</span>
-            </span><span className="mx-2"></span>PL<span className="inline-flex items-center justify-center relative">
+              <span className="sr-only">a</span>
+            </span><span className="mx-1"></span>Pl<span className="inline-flex items-center justify-center relative">
               <Pizza className="h-8 w-8 text-red-500 transform rotate-[225deg] translate-y-1" />
-              <span className="sr-only">A</span>
-            </span>NNER
+              <span className="sr-only">a</span>
+            </span> nner
           </h1>
-          <p className="text-muted-foreground">Plan your study time and stay on track with your assignments</p>
+          <p className="text-muted-foreground">Schedule your homework, while enjoying a delicious slice of pizza.</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
